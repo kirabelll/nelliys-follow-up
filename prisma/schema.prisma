@@ -1,0 +1,33 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Registration {
+  id            String   @id @default(cuid())
+  name          String
+  companyName   String
+  jobTitle      String
+  mobileNumber  String
+  officePhone   String?
+  email         String   @unique
+  website       String?
+  officeAddress String
+  country       String
+  industry      String
+  sourceEvent   String
+  followUpDate  String?
+  followUp      Boolean  @default(false)
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("registrations")
+}
