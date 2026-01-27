@@ -19,6 +19,34 @@ const registrationSchema = z.object({
   comment: z.string().max(500).optional(),
 });
 
+// Retry function for database operations
+async function withRetry<T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // If it's a connection error and we have retries left, wait and retry
+      if (attempt < maxRetries && (
+        lastError.message.includes("Can't reach database server") ||
+        lastError.message.includes("Connection terminated") ||
+        lastError.message.includes("Connection refused")
+      )) {
+        console.log(`Database connection attempt ${attempt} failed, retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+        continue;
+      }
+      
+      throw lastError;
+    }
+  }
+  
+  throw lastError!;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -26,10 +54,12 @@ export async function POST(request: NextRequest) {
     // Validate the request body
     const validatedData = registrationSchema.parse(body);
     
-    // Check if email already exists
-    const existingRegistration = await prisma.registration.findUnique({
-      where: { email: validatedData.email }
-    });
+    // Check if email already exists with retry
+    const existingRegistration = await withRetry(() =>
+      prisma.registration.findUnique({
+        where: { email: validatedData.email }
+      })
+    );
     
     if (existingRegistration) {
       return NextResponse.json(
@@ -38,25 +68,27 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create new registration
-    const registration = await prisma.registration.create({
-      data: {
-        name: validatedData.name,
-        companyName: validatedData.companyName,
-        jobTitle: validatedData.jobTitle,
-        mobileNumber: validatedData.mobileNumber,
-        officePhone: validatedData.officePhone || null,
-        email: validatedData.email,
-        website: validatedData.website || null,
-        officeAddress: validatedData.officeAddress,
-        country: validatedData.country,
-        industry: validatedData.industry,
-        sourceEvent: validatedData.sourceEvent,
-        followUpDate: validatedData.followUpDate || null,
-        followUp: validatedData.followUp,
-        comment: validatedData.comment || null,
-      },
-    });
+    // Create new registration with retry
+    const registration = await withRetry(() =>
+      prisma.registration.create({
+        data: {
+          name: validatedData.name,
+          companyName: validatedData.companyName,
+          jobTitle: validatedData.jobTitle,
+          mobileNumber: validatedData.mobileNumber,
+          officePhone: validatedData.officePhone || null,
+          email: validatedData.email,
+          website: validatedData.website || null,
+          officeAddress: validatedData.officeAddress,
+          country: validatedData.country,
+          industry: validatedData.industry,
+          sourceEvent: validatedData.sourceEvent,
+          followUpDate: validatedData.followUpDate || null,
+          followUp: validatedData.followUp,
+          comment: validatedData.comment || null,
+        },
+      })
+    );
     
     return NextResponse.json(
       { 
@@ -88,9 +120,11 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const registrations = await prisma.registration.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    const registrations = await withRetry(() =>
+      prisma.registration.findMany({
+        orderBy: { createdAt: 'desc' },
+      })
+    );
     
     return NextResponse.json(registrations);
   } catch (error) {

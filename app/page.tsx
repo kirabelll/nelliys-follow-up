@@ -10,6 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PhoneInput } from "@/components/ui/phone-input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Form,
   FormControl,
   FormDescription,
@@ -81,6 +88,32 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
+
+const industryOptions = [
+  "Agriculture & Farming",
+  "Automotive",
+  "Banking & Finance",
+  "Construction & Real Estate",
+  "Coffee Import And Export",
+  "Consulting Import",
+  "Education",
+  "Energy & Utilities",
+  "Food & Beverage",
+  "Government & Public Sector",
+  "Healthcare & Medical",
+  "Hospitality & Tourism",
+  "Information Technology",
+  "Insurance",
+  "Legal Services",
+  "Manufacturing",
+  "Media & Entertainment",
+  "Non-Profit Organization",
+  "Pharmaceutical",
+  "Retail & E-commerce",
+  "Telecommunications",
+  "Transportation & Logistics",
+  "Other"
+];
 
 export default function Home() {
   const form = useForm<FormData>({
@@ -234,12 +267,20 @@ export default function Home() {
                         <FormLabel>
                           Industry <span className="text-destructive">*</span>
                         </FormLabel>
-                        <FormControl>
-                          <Input className="rounded-md"
-                            placeholder="Enter your industry"
-                            {...field}
-                          />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="rounded-md w-full">
+                              <SelectValue placeholder="Select your industry" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {industryOptions.map((industry) => (
+                              <SelectItem key={industry} value={industry}>
+                                {industry}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
