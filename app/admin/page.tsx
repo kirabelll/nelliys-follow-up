@@ -47,6 +47,8 @@ const industryOptions = [
   "Automotive",
   "Banking & Finance",
   "Construction & Real Estate",
+  "Coffee Import And Export",
+  "Consulting Import",
   "Education",
   "Energy & Utilities",
   "Food & Beverage",
