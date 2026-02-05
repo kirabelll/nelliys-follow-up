@@ -20,7 +20,7 @@ export default function Header() {
         </nav>
         <div className="flex items-center gap-2">
           <Link href="/admin">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="hidden">
               View Registrations Admin
             </Button>
           </Link>
